@@ -1,11 +1,10 @@
-from pydub import AudioSegment
+from ExtendedAudioSegment import ExtendedAudioSegment as AudioSegment
 import pyaudio
 import wave
 import time
 import os
 import random
 import threading as thr
-import tempfile
 
 
 class musicplayer(object):
@@ -59,7 +58,7 @@ class musicplayer(object):
 
     def play_next_song(self):
         chunk = 1024
-        file = wave.open(self.export_from_queue(), "rb")
+        file = wave.open("temp.wav", "rb")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(file.getsampwidth()),
                         channels=file.getnchannels(),
