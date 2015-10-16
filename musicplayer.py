@@ -94,8 +94,6 @@ class musicplayer(object):
                 chunk_index += 1
                 if self.reverse:
                     data = song.readframesreverse(chunk_index)
-                    if chunk_index%40 == 0:
-                        print("doing stuff", chunk_index)
                 else:
                     data = song.readframes(chunk_index)
             else:
