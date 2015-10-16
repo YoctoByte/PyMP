@@ -47,6 +47,11 @@ def inputthread():
             mp.search_music(inp[7:])
         elif inp in ["help", "h"]:
             show_help()
+        elif inp in ["reverse", "r"]:
+            if mp.toggle_reverse():
+                print("reversed")
+            else:
+                print("unreversed")
         else:
             print("No valid input...")
 

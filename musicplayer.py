@@ -14,6 +14,7 @@ class musicplayer(object):
         self.next = False
         self.pause_at_end = False
         self.stop = False
+        self.reverse = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
         self.files = self.read_files(self.directory)
@@ -31,6 +32,10 @@ class musicplayer(object):
     def toggle_pause(self):
         self.pause = not self.pause
         return self.pause
+
+    def toggle_reverse(self):
+        self.reverse = not self.reverse
+        return self.reverse
 
     def next_song(self):
         self.next = True
@@ -55,21 +60,28 @@ class musicplayer(object):
 
     def _load_next(self):
         self.ready = False
-        self.song_next = AudioSegment.from_file(self.queue_music.pop())
+        song_next = self.queue_music.pop()
+        self.song_next = AudioSegment.from_file(song_next)
+        self.song_next.name = song_next
         self.ready = True
 
     def _play_next_song(self):
-        chunk = 1024
         chunk_index = 0
         while not self.ready:
             time.sleep(0.05)
         song = self.song_next
+        print(song.name)
+        print(len(song._data))
+        print(len(song._data)/song.frame_width)
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
                         channels=song.channels,
                         rate=int(song.frame_rate*self.speed),
                         output=True)
-        data = song.readframes(chunk_index, chunk)
+        if self.reverse:
+            data = song.readframesreverse(chunk_index)
+        else:
+            data = song.readframes(chunk_index)
 
         while data != '':
             if self.next:
@@ -80,7 +92,12 @@ class musicplayer(object):
             if not self.pause:
                 stream.write(data)
                 chunk_index += 1
-                data = song.readframes(chunk_index, chunk)
+                if self.reverse:
+                    data = song.readframesreverse(chunk_index)
+                    if chunk_index%40 == 0:
+                        print("doing stuff", chunk_index)
+                else:
+                    data = song.readframes(chunk_index)
             else:
                 time.sleep(0.05)
         stream.close()
