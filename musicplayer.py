@@ -1,6 +1,6 @@
 from ExtendedAudioSegment import ExtendedAudioSegment as AudioSegment
+# from pydub import AudioSegment
 import pyaudio
-import wave
 import time
 import os
 import random
@@ -16,6 +16,8 @@ class musicplayer(object):
         self.stop = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
+        self.scan_files()
+        self.init_play_queue()
 
     def scan_files(self):
         self.files = self.read_files(self.directory)
@@ -38,33 +40,29 @@ class musicplayer(object):
     def set_speed(self, play_speed):
         self.speed = play_speed
 
-    def export_from_queue(self):
-        music_file = self.queue_music.pop()
-        extension = os.path.splitext(music_file)[1]
-        song = AudioSegment.from_file(music_file, extension[1:])
-        song.export("temp.wav", format="wav")
-
     def play_song(self):
         thr_play = thr.Thread(target=self.play_next_song)
-        thr_load = thr.Thread(target=self.export_from_queue())
+        #thr_load = thr.Thread(target=self.export_from_queue())
         thr_play.start()
-        thr_load.start()
+        #thr_load.start()
         thr_play.join()
-        thr_load.join()
+        #thr_load.join()
         if self.pause_at_end:
             self.pause = True
             self.pause_at_end = False
         # hier nog wat doen
+        time.sleep(0.5)
 
     def play_next_song(self):
         chunk = 1024
-        file = wave.open("temp.wav", "rb")
+        chunk_index = 0
+        song = AudioSegment.from_file("temp.wav")
         p = pyaudio.PyAudio()
-        stream = p.open(format=p.get_format_from_width(file.getsampwidth()),
-                        channels=file.getnchannels(),
-                        rate=int(file.getframerate()*self.speed),
+        stream = p.open(format=p.get_format_from_width(song.sample_width),
+                        channels=song.channels,
+                        rate=int(song.frame_rate*self.speed),
                         output=True)
-        data = file.readframes(chunk)
+        data = song.get_chunk(chunk_index, chunk)
 
         while data != '':
             if self.next:
@@ -74,7 +72,8 @@ class musicplayer(object):
                 return
             if not self.pause:
                 stream.write(data)
-                data = file.readframes(chunk)
+                chunk_index += 1
+                data = song.get_chunk(chunk_index, chunk)
             else:
                 time.sleep(0.05)
         stream.close()
@@ -107,4 +106,3 @@ class musicplayer(object):
                 self.queue_music.append(file)
                 songs_found += 1
         print(songs_found, " songs found")
-        self.export_from_queue()

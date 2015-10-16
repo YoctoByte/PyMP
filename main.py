@@ -53,9 +53,6 @@ def inputthread():
 
 def musicthread():
     global stop
-    mp.scan_files()
-    mp.init_play_queue()
-    mp.export_from_queue()
     while not stop:
         mp.play_song()
 
