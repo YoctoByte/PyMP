@@ -16,8 +16,9 @@ class musicplayer(object):
         self.stop = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
-        self.scan_files()
+        self.files = self.read_files(self.directory)
         self.init_play_queue()
+        self._load_next()
 
     def scan_files(self):
         self.files = self.read_files(self.directory)
@@ -41,28 +42,34 @@ class musicplayer(object):
         self.speed = play_speed
 
     def play_song(self):
-        thr_play = thr.Thread(target=self.play_next_song)
-        #thr_load = thr.Thread(target=self.export_from_queue())
+        thr_play = thr.Thread(target=self._play_next_song)
+        thr_load = thr.Thread(target=self._load_next())
         thr_play.start()
-        #thr_load.start()
+        thr_load.start()
         thr_play.join()
-        #thr_load.join()
+        thr_load.join()
         if self.pause_at_end:
             self.pause = True
             self.pause_at_end = False
         # hier nog wat doen
-        time.sleep(0.5)
 
-    def play_next_song(self):
+    def _load_next(self):
+        self.ready = False
+        self.song_next = AudioSegment.from_file(self.queue_music.pop())
+        self.ready = True
+
+    def _play_next_song(self):
         chunk = 1024
         chunk_index = 0
-        song = AudioSegment.from_file("temp.wav")
+        while not self.ready:
+            time.sleep(0.05)
+        song = self.song_next
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
                         channels=song.channels,
                         rate=int(song.frame_rate*self.speed),
                         output=True)
-        data = song.get_chunk(chunk_index, chunk)
+        data = song.readframes(chunk_index, chunk)
 
         while data != '':
             if self.next:
@@ -73,7 +80,7 @@ class musicplayer(object):
             if not self.pause:
                 stream.write(data)
                 chunk_index += 1
-                data = song.get_chunk(chunk_index, chunk)
+                data = song.readframes(chunk_index, chunk)
             else:
                 time.sleep(0.05)
         stream.close()
