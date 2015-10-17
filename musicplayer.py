@@ -5,6 +5,7 @@ import time
 import os
 import random
 import threading as thr
+from easytag import easytag
 
 
 class musicplayer(object):
@@ -18,6 +19,7 @@ class musicplayer(object):
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
         self.files = self.read_files(self.directory)
+        self.queue_music = []
         self.init_play_queue()
         self._load_next()
 
@@ -70,7 +72,7 @@ class musicplayer(object):
         while not self.ready:
             time.sleep(0.05)
         song = self.song_next
-        print(os.path.basename(song.name))
+        print(self.return_name_string(song.name))
         print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
@@ -108,8 +110,12 @@ class musicplayer(object):
     def read_files(self, dire):
         files = []
         for file in os.listdir(dire):
+            try:
+                easytag(file)
+            except:
+                pass
             if self.is_supported(file):
-                if files != None:
+                if files is not None:
                     files.append(dire + "/" + file)
             else:
                 try:
@@ -128,5 +134,11 @@ class musicplayer(object):
                 songs_found += 1
         print(songs_found, " songs found")
 
-    def return_name_string(self, song):
-        return song
+    def return_name_string(self, path):
+        tag = easytag(path)
+        title = tag.gettitle()
+        artist = tag.getartist()
+        if title is not None and artist is not None:
+            return title + " - " + artist
+        else:
+            return os.path.splitext(os.path.basename(path))[0]
