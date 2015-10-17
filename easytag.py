@@ -31,11 +31,12 @@ class easytag(object):
         self.ext = ext
 
     def getartist(self):
-        if self.ext == ".flac":
-            try:
-                return self.audio["ARTIST"][0]
-            except:
-                return None
+        if self.ext in [".flac", ".m4a", ".mp4"]:
+            for format in ["ARTIST", "©ART"]:
+                try:
+                    return self.audio[format][0]
+                except:
+                    continue
         elif self.ext == ".mp3":
             try:
                 return self.audio["TPE1"].text[0]
@@ -44,12 +45,13 @@ class easytag(object):
         return None
 
     def gettitle(self):
-        if self.ext == ".flac":
-            try:
-                return self.audio["TITLE"][0]
-            except:
-                return None
-        elif self.ext == ".mp3":
+        if self.ext in [".flac", ".m4a", ".mp4"]:
+            for format in ["TITLE", "©nam"]:
+                try:
+                    return self.audio[format][0]
+                except:
+                    continue
+        elif self.ext in [".mp3"]:
             try:
                 return self.audio["TIT2"].text[0]
             except:
