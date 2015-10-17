@@ -36,11 +36,12 @@ class musicplayer(object):
         return self.pause
 
     def toggle_reverse(self):
-        self.reverse = not self.reverse
-        return self.reverse
+        self.speed = -self.speed
+        return self.speed < 0
 
     def next_song(self):
         self.next = True
+        self.pause = False
 
     def pause_at_end_of_song(self):
         self.pause_at_end = True
@@ -58,31 +59,33 @@ class musicplayer(object):
         if self.pause_at_end:
             self.pause = True
             self.pause_at_end = False
-        # hier nog wat doen
 
     def _load_next(self):
-        self.ready = False
+        while not self.queue_music:
+            time.sleep(0.05)
         song_next = self.queue_music.pop()
         self.song_next = AudioSegment.from_file(song_next)
         self.song_next.name = song_next
-        self.ready = True
 
     def _play_next_song(self):
-        chunk_index = 0
-        while not self.ready:
-            time.sleep(0.05)
         song = self.song_next
+
+        if self.speed > 0:
+            chunk_index = 0
+            speed = self.speed
+            data = song.readframes(chunk_index)
+        else:
+            chunk_index = int(len(song._data)/1024/song.frame_width)
+            speed = -self.speed
+            data = song.readframesreverse(chunk_index)
+
         print(self.return_name_string(song.name))
         print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
                         channels=song.channels,
-                        rate=int(song.frame_rate*self.speed),
+                        rate=int(song.frame_rate*speed),
                         output=True)
-        if self.reverse:
-            data = song.readframesreverse(chunk_index)
-        else:
-            data = song.readframes(chunk_index)
 
         while data != '':
             if self.next:
@@ -92,11 +95,12 @@ class musicplayer(object):
                 return
             if not self.pause:
                 stream.write(data)
-                chunk_index += 1
-                if self.reverse:
-                    data = song.readframesreverse(chunk_index)
-                else:
+                if self.speed > 0:
                     data = song.readframes(chunk_index)
+                    chunk_index += 1
+                else:
+                    data = song.readframesreverse(chunk_index)
+                    chunk_index -= 1
             else:
                 time.sleep(0.05)
         stream.close()
@@ -104,16 +108,12 @@ class musicplayer(object):
 
     def is_supported(self, file):
         e = os.path.splitext(file)[1]
-        if e in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac"]:
+        if e in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", "m4a"]:
             return True
 
     def read_files(self, dire):
         files = []
         for file in os.listdir(dire):
-            try:
-                easytag(file)
-            except:
-                pass
             if self.is_supported(file):
                 if files is not None:
                     files.append(dire + "/" + file)
@@ -139,6 +139,6 @@ class musicplayer(object):
         title = tag.gettitle()
         artist = tag.getartist()
         if title is not None and artist is not None:
-            return title + " - " + artist
+            return artist + " - " + title
         else:
-            return os.path.splitext(os.path.basename(path))[0]
+            return "filename: " + os.path.splitext(os.path.basename(path))[0]

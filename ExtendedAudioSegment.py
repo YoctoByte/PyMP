@@ -14,9 +14,9 @@ class ExtendedAudioSegment(AudioSegment):
 
     def readframesreverse(self, chunk_index, chunk=1024):
         chunk_width = chunk * self.frame_width
-        frame_start = math.floor(len(self._data) / chunk_width) * chunk_width - chunk_width * chunk_index
+        frame_start = chunk_index * chunk * self.frame_width
         frame_end = frame_start + self.frame_width * (chunk - 1)
-        if frame_start > 0:
+        if frame_start < len(self._data) and frame_start >= 0:
             data = self._data[frame_start: frame_end]
             revereddata = data[chunk_width - self.frame_width: chunk_width]
             for frame in range(chunk - 1):
