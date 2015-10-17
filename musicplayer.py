@@ -70,9 +70,8 @@ class musicplayer(object):
         while not self.ready:
             time.sleep(0.05)
         song = self.song_next
-        print(song.name)
-        print(len(song._data))
-        print(len(song._data)/song.frame_width)
+        print(os.path.basename(song.name))
+        print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
                         channels=song.channels,
@@ -128,3 +127,6 @@ class musicplayer(object):
                 self.queue_music.append(file)
                 songs_found += 1
         print(songs_found, " songs found")
+
+    def return_name_string(self, song):
+        return song
