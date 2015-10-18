@@ -1,5 +1,4 @@
 from ExtendedAudioSegment import ExtendedAudioSegment as AudioSegment
-# from pydub import AudioSegment
 import pyaudio
 import time
 import os
@@ -7,6 +6,10 @@ import random
 import threading as thr
 from easytag import easytag
 
+"""
+self.queue is a list of metadata dictionaries. The dictionaries contain an id, the pathname and data like
+artist and title.
+"""
 
 class musicplayer(object):
 
@@ -18,18 +21,34 @@ class musicplayer(object):
         self.reverse = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
-        self.files = self.read_files(self.directory)
-        self.queue_music = []
-        self._init_play_queue()
+        self.read_files(self.directory)
+        self.queue = list(self._files)
+        random.shuffle(self.queue)
         self._load_next()
 
-    def scan_files(self):
-        self.files = self.read_files(self.directory)
-        return self.files
+    def read_files(self, dire):
+        self._files = []
+        metadata = {}
+        index = 0
+        for file in os.listdir(dire):
+            if self.is_supported(file):
+                metadata["path"] = (dire + "/" + file)
+                metadata["id"] = index
+                index += 1
 
-    def _init_play_queue(self):
-        self.queue_music = list(self.files)
-        random.shuffle(self.queue_music)
+                tag = easytag(metadata["path"])
+                metadata["title"] = tag.gettitle()
+                metadata["artist"] = tag.getartist()
+                metadata["album"] = tag.getalbum()
+                metadata["year"] = tag.getyear()
+                metadata["genre"] = tag.getgenre()
+                metadata["tracknr"] = tag.gettracknr
+                self._files.append(dict(metadata))
+            else:
+                try:
+                    self.read_files(dire + "/" + file)
+                except:
+                    pass
 
     def toggle_pause(self):
         self.pause = not self.pause
@@ -50,25 +69,25 @@ class musicplayer(object):
         self.speed = play_speed
 
     def play_song(self):
-        thr_play = thr.Thread(target=self._play_next_song)
         thr_load = thr.Thread(target=self._load_next())
-        thr_play.start()
+        thr_play = thr.Thread(target=self._play_next_song)
         thr_load.start()
-        thr_play.join()
+        thr_play.start()
         thr_load.join()
+        thr_play.join()
         if self.pause_at_end:
             self.pause = True
             self.pause_at_end = False
 
     def _load_next(self):
-        while not self.queue_music:
+        while not self.queue:
             time.sleep(0.05)
-        song_next = self.queue_music.pop()
-        self.song_next = AudioSegment.from_file(song_next)
-        self.song_next.name = song_next
+        metadata = self.queue.pop()
+        self.nextsong = AudioSegment.from_file(metadata["path"])
+        self.nextsong.metadata = metadata
 
     def _play_next_song(self):
-        song = self.song_next
+        song = self.nextsong
 
         if self.speed > 0:
             chunk_index = 0
@@ -79,7 +98,7 @@ class musicplayer(object):
             speed = -self.speed
             data = song.readframesreverse(chunk_index)
 
-        print(self.namestring(song.name))
+        print(self.namestring(song.metadata))
         print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
@@ -112,34 +131,20 @@ class musicplayer(object):
         else:
             return False
 
-    def read_files(self, dire):
-        files = []
-        for file in os.listdir(dire):
-            if self.is_supported(file):
-                if files is not None:
-                    files.append(dire + "/" + file)
-            else:
-                try:
-                    files += self.read_files(dire + '/' + file)
-                except:
-                    pass
-        return files
-
-    def search_music(self, search):
+    def search_music(self, searchterm):
         songs_found = 0
-        self.queue_music = []
-        for file in self.files:
-            if search.lower() in file.lower():
+        self.queue = []
+        for file in self._files:
+            if searchterm.lower() in file["path"].lower():
                 print(self.namestring(file))
-                self.queue_music.append(file)
+                self.queue.append(file)
                 songs_found += 1
         print(songs_found, " songs found")
 
-    def namestring(self, path):
-        tag = easytag(path)
-        title = tag.gettitle()
-        artist = tag.getartist()
+    def namestring(self, metadata):
+        title = metadata["title"]
+        artist = metadata["artist"]
         if title is not None and artist is not None:
             return artist + " - " + title
         else:
-            return "filename: " + os.path.splitext(os.path.basename(path))[0]
+            return "filename: " + os.path.splitext(os.path.basename(metadata["path"]))[0]

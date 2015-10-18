@@ -16,12 +16,12 @@ class easytag(object):
             self.metadata = None
 
     def getattribute(self, attribute):
-        for format in attribute:
+        for attr in attribute:
             try:
                 if self.ext == ".mp3":
-                    return self.metadata[format].text[0]
+                    return self.metadata[attr].text[0]
                 else:
-                    return self.metadata[format][0]
+                    return self.metadata[attr][0]
             except:
                 continue
         return None
@@ -40,3 +40,6 @@ class easytag(object):
 
     def getgenre(self):
         return self.getattribute(["GENRE", "TCON", "IGNR"])
+
+    def gettracknr(self):
+        return self.getattribute(["TRCK"])
