@@ -1,61 +1,42 @@
 import os
-
-from mutagen.mp3 import MP3
-from mutagen.mp4 import MP4
-from mutagen.flac import FLAC
-from mutagen.m4a import M4A
+import mutagen
 
 """
 Uses mutagen to read (and maybe write in the future) audiofile tags in a more easy way.
+
+".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"
 """
 
 class easytag(object):
     def __init__(self, path):
-        ext = os.path.splitext(path)[1].lower()
-        if ext == ".mp3":
-            self.audio = MP3(path)
-            print("mp3 file")
-            print(self.audio.tags)
-        elif ext in [".mp4", ".m4a"]:
-            self.audio = MP4(path)
-            print("mp4/m4a file")
-            print(self.audio.tags)
-        elif ext == ".flac":
-            self.audio = FLAC(path)
-            print("flac file")
-            print(self.audio.tags)
-        # if ext == "wav":
-        #     from mutagen.wavpack import WavPack as mutagen
-        # if ext == "ogg":
-        #     from mutagen.ogg import OggFileType as mutagen
-        self.ext = ext
+        self.ext = os.path.splitext(path)[1].lower()
+        try:
+            self.metadata = mutagen.File(path)
+        except:
+            self.metadata = None
+
+    def getattribute(self, attribute):
+        for format in attribute:
+            try:
+                if self.ext == ".mp3":
+                    return self.metadata[format].text[0]
+                else:
+                    return self.metadata[format][0]
+            except:
+                continue
+        return None
 
     def getartist(self):
-        if self.ext in [".flac", ".m4a", ".mp4"]:
-            for format in ["ARTIST", "©ART"]:
-                try:
-                    return self.audio[format][0]
-                except:
-                    continue
-        elif self.ext == ".mp3":
-            try:
-                return self.audio["TPE1"].text[0]
-            except:
-                return None
-        return None
+        return self.getattribute(["ARTIST", "©ART", "TPE1", "IART"])
 
     def gettitle(self):
-        if self.ext in [".flac", ".m4a", ".mp4"]:
-            for format in ["TITLE", "©nam"]:
-                try:
-                    return self.audio[format][0]
-                except:
-                    continue
-        elif self.ext in [".mp3"]:
-            try:
-                return self.audio["TIT2"].text[0]
-            except:
-                return None
-        return None
+        return self.getattribute(["TITLE", "©nam", "TIT2", "INAM"])
 
-# ".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac"
+    def getalbum(self):
+        return self.getattribute(["ALBUM", "©alb", "TALB", "IPRD"])
+
+    def getyear(self):
+        return self.getattribute(["DATE", "TDRC", "ICRD"])
+
+    def getgenre(self):
+        return self.getattribute(["GENRE", "TCON", "IGNR"])

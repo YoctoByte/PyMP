@@ -20,15 +20,15 @@ class musicplayer(object):
         self.directory = os.environ['HOME'] + "/Music"
         self.files = self.read_files(self.directory)
         self.queue_music = []
-        self.init_play_queue()
+        self._init_play_queue()
         self._load_next()
 
     def scan_files(self):
         self.files = self.read_files(self.directory)
         return self.files
 
-    def init_play_queue(self):
-        self.queue_music = self.files
+    def _init_play_queue(self):
+        self.queue_music = list(self.files)
         random.shuffle(self.queue_music)
 
     def toggle_pause(self):
@@ -79,7 +79,7 @@ class musicplayer(object):
             speed = -self.speed
             data = song.readframesreverse(chunk_index)
 
-        print(self.return_name_string(song.name))
+        print(self.namestring(song.name))
         print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
@@ -107,9 +107,10 @@ class musicplayer(object):
         p.terminate()
 
     def is_supported(self, file):
-        e = os.path.splitext(file)[1]
-        if e in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", "m4a"]:
+        if os.path.splitext(file)[1] in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"]:
             return True
+        else:
+            return False
 
     def read_files(self, dire):
         files = []
@@ -129,12 +130,12 @@ class musicplayer(object):
         self.queue_music = []
         for file in self.files:
             if search.lower() in file.lower():
-                print(file)
+                print(self.namestring(file))
                 self.queue_music.append(file)
                 songs_found += 1
         print(songs_found, " songs found")
 
-    def return_name_string(self, path):
+    def namestring(self, path):
         tag = easytag(path)
         title = tag.gettitle()
         artist = tag.getartist()
