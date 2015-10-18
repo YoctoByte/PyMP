@@ -21,22 +21,19 @@ class musicplayer(object):
         self.reverse = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
+        self._files = []
         self.read_files(self.directory)
         self.queue = list(self._files)
         random.shuffle(self.queue)
         self._load_next()
 
     def read_files(self, dire):
-        self._files = []
         metadata = {}
-        index = 0
         for file in os.listdir(dire):
             if self.is_supported(file):
                 metadata["path"] = (dire + "/" + file)
-                metadata["id"] = index
-                index += 1
-
                 tag = easytag(metadata["path"])
+                metadata["ext"] = os.path.splitext(metadata["path"])[1]
                 metadata["title"] = tag.gettitle()
                 metadata["artist"] = tag.getartist()
                 metadata["album"] = tag.getalbum()
@@ -49,6 +46,20 @@ class musicplayer(object):
                     self.read_files(dire + "/" + file)
                 except:
                     pass
+
+    def reorder(self):
+        for metadata in self._files:
+            if metadata["artist"] is not None and metadata["title"] is not None:
+                try:
+                    os.makedirs(self.directory + "/" + metadata["artist"])
+                except:
+                    pass
+                newpath = self.directory + "/" + metadata["artist"] + "/" + metadata["artist"] + " - " + metadata["title"] + metadata["ext"]
+            else:
+                newpath = self.directory + "/" + os.path.basename(metadata["path"])
+            os.replace(metadata["path"], newpath)
+            metadata["path"] = newpath
+        pass
 
     def toggle_pause(self):
         self.pause = not self.pause

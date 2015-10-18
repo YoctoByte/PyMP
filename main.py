@@ -24,6 +24,16 @@ def show_help():
     print()
 
 
+def keypress():
+    pass
+
+
+def yesorno(input):
+    if input in ["y", "yes", "Y", "Yes", "YES", "j", "J", "JA", "ja", "Ja"]:
+        return True
+    return False
+
+
 def inputthread():
     global stop
     while not stop:
@@ -52,6 +62,9 @@ def inputthread():
                 print("reversed")
             else:
                 print("unreversed")
+        elif inp in ["reorder"]:
+            if yesorno(input("This will permanently change the metadata and name of files. Do you want to proceed? y/n: ")):
+                mp.reorder()
         else:
             print("No valid input...")
 
@@ -67,11 +80,14 @@ mp = musicplayer()
 thr_main = thr.Thread(target=mainthread)
 thr_music = thr.Thread(target=musicthread)
 thr_input = thr.Thread(target=inputthread)
+thr_key_pressed = thr.Thread(target=keypress)
 
 thr_main.start()
 thr_music.start()
 thr_input.start()
+thr_key_pressed.start()
 
 thr_main.join()
 thr_music.join()
 thr_input.join()
+thr_key_pressed.join()
