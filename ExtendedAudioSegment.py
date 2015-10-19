@@ -1,5 +1,4 @@
 from pydub import AudioSegment
-import math
 
 
 class ExtendedAudioSegment(AudioSegment):

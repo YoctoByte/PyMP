@@ -1,5 +1,5 @@
 import threading as thr
-from musicplayer import musicplayer
+from musicplayer import MusicPlayer
 import time
 
 stop = False
@@ -28,8 +28,8 @@ def keypress():
     pass
 
 
-def yesorno(input):
-    if input in ["y", "yes", "Y", "Yes", "YES", "j", "J", "JA", "ja", "Ja"]:
+def yesorno(inp):
+    if inp in ["y", "yes", "Y", "Yes", "YES", "j", "J", "JA", "ja", "Ja"]:
         return True
     return False
 
@@ -63,7 +63,8 @@ def inputthread():
             else:
                 print("unreversed")
         elif inp in ["reorder"]:
-            if yesorno(input("This will permanently change the metadata and name of files. Do you want to proceed? y/n: ")):
+            if yesorno(input("This will permanently change the metadata and "
+                             "name of files. Do you want to proceed? y/n: ")):
                 mp.reorder()
         else:
             print("No valid input...")
@@ -75,7 +76,7 @@ def musicthread():
         mp.play_song()
 
 
-mp = musicplayer()
+mp = MusicPlayer()
 
 thr_main = thr.Thread(target=mainthread)
 thr_music = thr.Thread(target=musicthread)

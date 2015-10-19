@@ -7,7 +7,7 @@ Uses mutagen to read (and maybe write in the future) audiofile tags in a more ea
 ".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"
 """
 
-class easytag(object):
+class EasyTag(object):
     def __init__(self, path):
         self.ext = os.path.splitext(path)[1].lower()
         try:

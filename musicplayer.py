@@ -4,62 +4,28 @@ import time
 import os
 import random
 import threading as thr
-from easytag import easytag
+from files import Files
 
 """
 self.queue is a list of metadata dictionaries. The dictionaries contain an id, the pathname and data like
 artist and title.
 """
 
-class musicplayer(object):
+
+class MusicPlayer(object):
 
     def __init__(self):
         self.pause = False
         self.next = False
-        self.pause_at_end = False
         self.stop = False
+        self.pause_at_end = False
         self.reverse = False
         self.speed = 1
         self.directory = os.environ['HOME'] + "/Music"
-        self._files = []
-        self.read_files(self.directory)
+        self._files = Files(self.directory)
         self.queue = list(self._files)
         random.shuffle(self.queue)
         self._load_next()
-
-    def read_files(self, dire):
-        metadata = {}
-        for file in os.listdir(dire):
-            if self.is_supported(file):
-                metadata["path"] = (dire + "/" + file)
-                tag = easytag(metadata["path"])
-                metadata["ext"] = os.path.splitext(metadata["path"])[1]
-                metadata["title"] = tag.gettitle()
-                metadata["artist"] = tag.getartist()
-                metadata["album"] = tag.getalbum()
-                metadata["year"] = tag.getyear()
-                metadata["genre"] = tag.getgenre()
-                metadata["tracknr"] = tag.gettracknr
-                self._files.append(dict(metadata))
-            else:
-                try:
-                    self.read_files(dire + "/" + file)
-                except:
-                    pass
-
-    def reorder(self):
-        for metadata in self._files:
-            if metadata["artist"] is not None and metadata["title"] is not None:
-                try:
-                    os.makedirs(self.directory + "/" + metadata["artist"])
-                except:
-                    pass
-                newpath = self.directory + "/" + metadata["artist"] + "/" + metadata["artist"] + " - " + metadata["title"] + metadata["ext"]
-            else:
-                newpath = self.directory + "/" + os.path.basename(metadata["path"])
-            os.replace(metadata["path"], newpath)
-            metadata["path"] = newpath
-        pass
 
     def toggle_pause(self):
         self.pause = not self.pause
@@ -135,12 +101,6 @@ class musicplayer(object):
                 time.sleep(0.05)
         stream.close()
         p.terminate()
-
-    def is_supported(self, file):
-        if os.path.splitext(file)[1] in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"]:
-            return True
-        else:
-            return False
 
     def search_music(self, searchterm):
         songs_found = 0
