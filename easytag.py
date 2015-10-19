@@ -7,12 +7,13 @@ Uses mutagen to read (and maybe write in the future) audiofile tags in a more ea
 ".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"
 """
 
+
 class EasyTag(object):
     def __init__(self, path):
         self.ext = os.path.splitext(path)[1].lower()
         try:
             self.metadata = mutagen.File(path)
-        except:
+        except KeyError:
             self.metadata = None
 
     def getattribute(self, attribute):
@@ -22,7 +23,7 @@ class EasyTag(object):
                     return self.metadata[attr].text[0]
                 else:
                     return self.metadata[attr][0]
-            except:
+            except KeyError:
                 continue
         return None
 
@@ -43,3 +44,15 @@ class EasyTag(object):
 
     def gettracknr(self):
         return self.getattribute(["TRCK"])
+
+    def getbitrate(self):
+        try:
+            return self.metadata.info.bitrate
+        except AttributeError:
+            return None
+
+    def getlength(self):
+        try:
+            return self.metadata.info.length
+        except AttributeError:
+            return None

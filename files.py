@@ -1,6 +1,8 @@
 import os
 from easytag import EasyTag
 
+SUPPORTED_EXTENSIONS = [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"]
+
 
 class Files(object):
     def __init__(self, path):
@@ -23,9 +25,11 @@ class Files(object):
                 metadata["album"] = tag.getalbum()
                 metadata["year"] = tag.getyear()
                 metadata["genre"] = tag.getgenre()
-                metadata["tracknr"] = tag.gettracknr
+                metadata["tracknr"] = tag.gettracknr()
+                metadata["bitrate"] = tag.getbitrate()
+                metadata["length"] = tag.getlength()
                 self._files.append(dict(metadata))
-            elif os.path.isdir(item):
+            elif os.path.isdir(path + "/" + item):
                 self.scan_dir(path + "/" + item)
 
     def remove_nonempty_dir(self, path):
@@ -54,36 +58,44 @@ class Files(object):
         except OSError:
             pass
 
-    def reorder(self, files):
-        for metadata in files:
-            if metadata["artist"] is not None:
+    def reorder(self):
+        for metadata in self._files:
+            artist = metadata["artist"]
+            album = metadata["album"]
+            title = metadata["title"]
+            if artist is not None:
+                artist = artist.replace("/", " ")
+            if album is not None:
+                album = album.replace("/", " ")
+            if title is not None:
+                title = title.replace("/", " ")
+
+            if artist is not None:
+                new_path = self.path + "/" + artist
                 try:
-                    os.makedirs(self.path + "/" + metadata["artist"].replace("/", " "))
-                except:
+                    os.makedirs(self.path + "/" + artist)
+                except OSError:
                     pass
-                newpath = self.path + "/" + metadata["artist"].replace("/", " ")
-                if metadata["album"] is not None:
-                    newpath += "/" + metadata["album"]
+                if album is not None:
+                    new_path += "/" + album
                     try:
-                        os.makedirs(self.path + "/" + metadata["artist"].replace("/", " ") + "/" + metadata["album"].replace("/", " "))
-                    except:
+                        os.makedirs(self.path + "/" + artist + "/" + album)
+                    except OSError:
                         pass
-                if metadata["title"] is not None:
-                    newpath += "/" + metadata["artist"].replace("/", " ") + " - " + metadata["title"].replace("/", " ") + metadata["ext"]
+                if title is not None:
+                    new_path += "/" + artist + " - " + title + metadata["ext"]
                 else:
-                    newpath += "/" + os.path.basename(metadata["path"])
+                    new_path += "/" + os.path.basename(metadata["path"])
 
             else:
-                newpath = self.path + "/" + os.path.basename(metadata["path"])
+                new_path = self.path + "/" + os.path.basename(metadata["path"])
 
-            if metadata["path"] != newpath:
-                os.replace(metadata["path"], newpath)
-                metadata["path"] = newpath
+            if metadata["path"] != new_path:
+                os.replace(metadata["path"], new_path)
+                metadata["path"] = new_path
         self.remove_empty_dirs(self.path)
 
 
 def is_supported(file):
-    if os.path.splitext(file)[1] in [".mp3", ".mp4", ".wav", ".ogg", ".wma", ".aiff", ".flv", ".flac", ".m4a"]:
+    if os.path.splitext(file)[1] in SUPPORTED_EXTENSIONS:
         return True
-    else:
-        return False

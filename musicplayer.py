@@ -76,7 +76,6 @@ class MusicPlayer(object):
             data = song.readframesreverse(chunk_index)
 
         print(self.namestring(song.metadata))
-        print("%.1f" % (len(song._data)/song.frame_width/song.frame_rate), "seconds")
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(song.sample_width),
                         channels=song.channels,
@@ -112,10 +111,17 @@ class MusicPlayer(object):
                 songs_found += 1
         print(songs_found, " songs found")
 
+    def reorder(self):
+        self._files.reorder()
+
     def namestring(self, metadata):
         title = metadata["title"]
         artist = metadata["artist"]
+        length = metadata["length"]
+        str_length = ""
+        if length is not None:
+            str_length = " (" + str("%.1f" % metadata["length"]) + " seconds)"
         if title is not None and artist is not None:
-            return artist + " - " + title
+            return artist + " - " + title + str_length
         else:
-            return "filename: " + os.path.splitext(os.path.basename(metadata["path"]))[0]
+            return "filename: " + os.path.splitext(os.path.basename(metadata["path"]))[0] + str_length
