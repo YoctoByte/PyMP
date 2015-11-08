@@ -17,6 +17,8 @@ class EasyTag(object):
             self.metadata = None
 
     def getattribute(self, attribute):
+        if self.metadata is None:
+            return None
         for attr in attribute:
             try:
                 if self.ext == ".mp3":
@@ -28,13 +30,13 @@ class EasyTag(object):
         return None
 
     def getartist(self):
-        return self.getattribute(["ARTIST", "©ART", "TPE1", "IART"])
+        return self.getattribute(["ARTIST", "©ART", "TPE1", "IART", "Author"])
 
     def gettitle(self):
-        return self.getattribute(["TITLE", "©nam", "TIT2", "INAM"])
+        return self.getattribute(["TITLE", "©nam", "TIT2", "INAM", "Title"])
 
     def getalbum(self):
-        return self.getattribute(["ALBUM", "©alb", "TALB", "IPRD"])
+        return self.getattribute(["ALBUM", "©alb", "TALB", "IPRD", "WM/AlbumTitle"])
 
     def getyear(self):
         return self.getattribute(["DATE", "TDRC", "ICRD"])

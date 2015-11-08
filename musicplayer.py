@@ -10,6 +10,7 @@ from files import Files
 self.queue is a list of metadata dictionaries. The dictionaries contain an id, the pathname and data like
 artist and title.
 """
+SLEEP_TIME = 0.05
 
 
 class MusicPlayer(object):
@@ -20,8 +21,9 @@ class MusicPlayer(object):
         self.stop = False
         self.pause_at_end = False
         self.reverse = False
+        # self.ready = True
         self.speed = 1
-        self.directory = os.environ['HOME'] + "/Music"
+        self.directory = os.environ['HOME'] + "/testmusic"
         self._files = Files(self.directory)
         self.queue = list(self._files)
         random.shuffle(self.queue)
@@ -46,25 +48,34 @@ class MusicPlayer(object):
         self.speed = play_speed
 
     def play_song(self):
+        # self.ready = False
         thr_load = thr.Thread(target=self._load_next())
         thr_play = thr.Thread(target=self._play_next_song)
-        thr_load.start()
+
         thr_play.start()
+        thr_load.start()
+
         thr_load.join()
         thr_play.join()
+
         if self.pause_at_end:
             self.pause = True
             self.pause_at_end = False
 
     def _load_next(self):
         while not self.queue:
-            time.sleep(0.05)
+            time.sleep(SLEEP_TIME)
+        # while not self.ready:
+        #    time.sleep(SLEEP_TIME)
         metadata = self.queue.pop()
         self.nextsong = AudioSegment.from_file(metadata["path"])
         self.nextsong.metadata = metadata
+        print(metadata)
 
     def _play_next_song(self):
+        print("play next song")
         song = self.nextsong
+        # self.ready = True
 
         if self.speed > 0:
             chunk_index = 0
@@ -97,7 +108,7 @@ class MusicPlayer(object):
                     data = song.readframesreverse(chunk_index)
                     chunk_index -= 1
             else:
-                time.sleep(0.05)
+                time.sleep(SLEEP_TIME)
         stream.close()
         p.terminate()
 
