@@ -63,6 +63,9 @@ class Files(object):
             artist = metadata["artist"]
             album = metadata["album"]
             title = metadata["title"]
+            print(metadata["path"])
+            tag = EasyTag(metadata["path"])
+            print(tag.metadata)
             if artist is not None:
                 artist = artist.replace("/", " ")
             if album is not None:

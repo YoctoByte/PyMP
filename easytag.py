@@ -23,14 +23,15 @@ class EasyTag(object):
             try:
                 if self.ext == ".mp3":
                     return self.metadata[attr].text[0]
-                else:
-                    return self.metadata[attr][0]
+                if self.ext == ".wma":
+                    return str(self.metadata[attr][0])
+                return self.metadata[attr][0]
             except KeyError:
                 continue
         return None
 
     def getartist(self):
-        return self.getattribute(["ARTIST", "©ART", "TPE1", "IART", "Author"])
+        return self.getattribute(["ARTIST", "©ART", "TPE1", "IART", "Author", "WM/AlbumArtist"])
 
     def gettitle(self):
         return self.getattribute(["TITLE", "©nam", "TIT2", "INAM", "Title"])
@@ -39,13 +40,13 @@ class EasyTag(object):
         return self.getattribute(["ALBUM", "©alb", "TALB", "IPRD", "WM/AlbumTitle"])
 
     def getyear(self):
-        return self.getattribute(["DATE", "TDRC", "ICRD"])
+        return self.getattribute(["DATE", "TDRC", "ICRD", "WM/Year"])
 
     def getgenre(self):
-        return self.getattribute(["GENRE", "TCON", "IGNR"])
+        return self.getattribute(["GENRE", "TCON", "IGNR", "WM/Genre"])
 
     def gettracknr(self):
-        return self.getattribute(["TRCK"])
+        return self.getattribute(["TRCK", "WM/TrackNumber"])
 
     def getbitrate(self):
         try:

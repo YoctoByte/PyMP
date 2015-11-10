@@ -3,7 +3,6 @@ import pyaudio
 import time
 import os
 import random
-import threading as thr
 from files import Files
 
 """
@@ -11,6 +10,8 @@ self.queue is a list of metadata dictionaries. The dictionaries contain an id, t
 artist and title.
 """
 SLEEP_TIME = 0.05
+MAX_LOADED = 4
+DIRECTORY = os.environ['HOME'] + "/Music"
 
 
 class MusicPlayer(object):
@@ -21,13 +22,12 @@ class MusicPlayer(object):
         self.stop = False
         self.pause_at_end = False
         self.reverse = False
-        # self.ready = True
         self.speed = 1
-        self.directory = os.environ['HOME'] + "/testmusic"
-        self._files = Files(self.directory)
+        self._files = Files(DIRECTORY)
         self.queue = list(self._files)
         random.shuffle(self.queue)
-        self._load_next()
+        self._loaded_songs = []
+        self._nr_loaded = 0
 
     def toggle_pause(self):
         self.pause = not self.pause
@@ -47,35 +47,21 @@ class MusicPlayer(object):
     def set_speed(self, play_speed):
         self.speed = play_speed
 
-    def play_song(self):
-        # self.ready = False
-        thr_load = thr.Thread(target=self._load_next())
-        thr_play = thr.Thread(target=self._play_next_song)
-
-        thr_play.start()
-        thr_load.start()
-
-        thr_load.join()
-        thr_play.join()
-
-        if self.pause_at_end:
-            self.pause = True
-            self.pause_at_end = False
-
-    def _load_next(self):
-        while not self.queue:
+    def load_next(self):
+        while not self.queue or self._nr_loaded >= MAX_LOADED:
             time.sleep(SLEEP_TIME)
-        # while not self.ready:
-        #    time.sleep(SLEEP_TIME)
         metadata = self.queue.pop()
-        self.nextsong = AudioSegment.from_file(metadata["path"])
-        self.nextsong.metadata = metadata
-        print(metadata)
+        song = AudioSegment.from_file(metadata["path"])
+        song.metadata = metadata
+        self._loaded_songs.append(song)
+        self._nr_loaded += 1
+        print("loaded", self.namestring(metadata))
 
-    def _play_next_song(self):
-        print("play next song")
-        song = self.nextsong
-        # self.ready = True
+    def play_next_song(self):
+        while not self._loaded_songs:
+            time.sleep(SLEEP_TIME)
+        song = self._loaded_songs.pop(0)
+        self._nr_loaded -= 1
 
         if self.speed > 0:
             chunk_index = 0
@@ -111,6 +97,9 @@ class MusicPlayer(object):
                 time.sleep(SLEEP_TIME)
         stream.close()
         p.terminate()
+        if self.pause_at_end:
+            self.pause_at_end = False
+            self.pause = True
 
     def search_music(self, searchterm):
         songs_found = 0

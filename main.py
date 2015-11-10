@@ -73,22 +73,30 @@ def inputthread():
 def musicthread():
     global stop
     while not stop:
-        mp.play_song()
+        mp.play_next_song()
 
+
+def loader():
+    global stop
+    while not stop:
+        mp.load_next()
 
 mp = MusicPlayer()
 
 thr_main = thr.Thread(target=mainthread)
+thr_loader = thr.Thread(target=loader)
 thr_music = thr.Thread(target=musicthread)
 thr_input = thr.Thread(target=inputthread)
 thr_key_pressed = thr.Thread(target=keypress)
 
 thr_main.start()
+thr_loader.start()
 thr_music.start()
 thr_input.start()
 thr_key_pressed.start()
 
 thr_main.join()
+thr_loader.join()
 thr_music.join()
 thr_input.join()
 thr_key_pressed.join()
