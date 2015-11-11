@@ -10,7 +10,7 @@ self.queue is a list of metadata dictionaries. The dictionaries contain an id, t
 artist and title.
 """
 SLEEP_TIME = 0.05
-MAX_LOADED = 4
+MAX_LOADED = 3
 DIRECTORY = os.environ['HOME'] + "/Music"
 
 
@@ -19,7 +19,7 @@ class MusicPlayer(object):
     def __init__(self):
         self.pause = False
         self.next = False
-        self.stop = False
+        self._stop = False
         self.pause_at_end = False
         self.reverse = False
         self.speed = 1
@@ -47,8 +47,13 @@ class MusicPlayer(object):
     def set_speed(self, play_speed):
         self.speed = play_speed
 
+    def stop(self):
+        self._stop = True
+
     def load_next(self):
         while not self.queue or self._nr_loaded >= MAX_LOADED:
+            if self._stop is True:
+                return
             time.sleep(SLEEP_TIME)
         metadata = self.queue.pop()
         song = AudioSegment.from_file(metadata["path"])
@@ -59,6 +64,8 @@ class MusicPlayer(object):
 
     def play_next_song(self):
         while not self._loaded_songs:
+            if self._stop is True:
+                return
             time.sleep(SLEEP_TIME)
         song = self._loaded_songs.pop(0)
         self._nr_loaded -= 1
